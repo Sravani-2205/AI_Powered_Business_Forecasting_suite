@@ -16,7 +16,8 @@ How it works (same idea as our first LSTM, now inside the pipeline):
 
 Training safeguards:
   - The last horizon of the training data is kept aside for EARLY STOPPING: training stops
-    when the error there has not improved for 20 rounds, and the best version is kept.
+    when the error there has not improved for 8 rounds (at most 60 rounds in total), and
+    the best version is kept. These limits trade a little accuracy for a lot of speed.
   - Fixed random seed, so results repeat.
 
 Training is the slowest part of the whole pipeline (the backtest trains it 6 times).
@@ -30,8 +31,8 @@ from forecaster.models.base import ForecastModel
 from forecaster.models.machine_learning import DAYS_SINCE_CAP, DAYS_UNTIL_CAP, festival_features
 
 WINDOW = 28
-MAX_EPOCHS = 200
-PATIENCE = 20
+MAX_EPOCHS = 60     # kept low so the LSTM finishes in reasonable time on a laptop CPU
+PATIENCE = 8
 BATCH = 64
 SEED = 42
 

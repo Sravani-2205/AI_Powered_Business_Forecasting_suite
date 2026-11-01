@@ -95,7 +95,11 @@ def detect_frequency(dates: pd.Series) -> str:
 
 def load_series(path, date_col: str, value_col: str) -> tuple[pd.Series, DataReport]:
     """Load a CSV, clean it into one regular series, and return it with a DataReport."""
-    raw = pd.read_csv(path)
+    return series_from_frame(pd.read_csv(path), date_col, value_col)
+
+
+def series_from_frame(raw: pd.DataFrame, date_col: str, value_col: str) -> tuple[pd.Series, DataReport]:
+    """Same as load_series, for a table that is already loaded (e.g. uploaded in the app)."""
     for col in (date_col, value_col):
         if col not in raw.columns:
             raise ValueError(f"Column '{col}' not found. Columns in the file: {list(raw.columns)}")

@@ -148,3 +148,51 @@ def bigger_neighbour(name: str, table: pd.DataFrame, calendar: pd.DataFrame) -> 
             same = len(my_dates & other_dates) >= len(my_dates) / 2
             best, best_effect = (f"same days as {other}" if same else other), effect
     return best
+
+
+def holiday_groups(table: pd.DataFrame, calendar: pd.DataFrame, preferred: list | None = None) -> pd.Series:
+    """Put holidays that fall within a few days of each other (in at least half the years)
+    into one group. Sales data cannot tell the members of a group apart, so the user should
+    normally pick ONE from each group.
+
+    Each group is named after its LEADER: a well-known name from `preferred` (e.g. the
+    country's shortlist, so "Holi" leads rather than "Holika Dahan", the evening before it),
+    or else the member with the strongest effect."""
+    span = DAYS_BEFORE + DAYS_AFTER
+    names = list(table.index)
+    dates = {n: set(calendar.loc[calendar["name"] == n, "date"]) for n in names}
+    parent = {n: n for n in names}
+
+    def root(n):
+        while parent[n] != n:
+            n = parent[n]
+        return n
+
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            close = sum(any(abs((d - o).days) <= span for o in dates[b]) for d in dates[a])
+            if close >= min(len(dates[a]), len(dates[b])) / 2:
+                parent[root(b)] = root(a)
+
+    members = {}
+    for n in names:
+        members.setdefault(root(n), []).append(n)
+    label = {}
+    preferred = set(preferred or [])
+    for group in members.values():
+        candidates = [n for n in group if n in preferred] or group
+        leader = max(candidates, key=lambda n: abs(table.loc[n, "avg_uplift_%"]))
+        for n in group:
+            label[n] = leader
+    return pd.Series(label, name="group")
+
+
+def default_selection(table: pd.DataFrame, groups: pd.Series, min_uplift: float = 10.0) -> list:
+    """A sensible starting choice: from each group, its leader, if the leader's effect is
+    consistent every year and at least `min_uplift` % in size."""
+    chosen = []
+    for leader in groups.unique():
+        row = table.loc[leader]
+        if row["consistent"] and abs(row["avg_uplift_%"]) >= min_uplift:
+            chosen.append(leader)
+    return chosen

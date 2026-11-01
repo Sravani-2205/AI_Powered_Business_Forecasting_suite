@@ -117,9 +117,11 @@ def covid_shock(dates, cfg):
     return effect
 
 
-def simulate(cfg, seed=42):
+def simulate(cfg, seed=42, end=END):
+    """Simulate from START to `end`. A later `end` is used by the app to make SIMULATED
+    'actual' sales for after the history, to demo the Track actuals page."""
     rng = np.random.default_rng(seed)
-    dates = pd.date_range(START, END, freq="D")
+    dates = pd.date_range(START, end, freq="D")
     parts = pd.DataFrame(index=dates)
     parts["trend"] = growth_trend(dates, cfg)
     parts["weekly"] = weekly_pattern(dates, cfg)

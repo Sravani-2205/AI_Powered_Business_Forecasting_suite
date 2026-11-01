@@ -1,0 +1,11 @@
+# Streamlit settings for this app: a calm dark "slate" theme with one soft blue accent.
+[theme]
+base = "dark"
+primaryColor = "#5B9BF0"              # soft blue: buttons, active step, ticks
+backgroundColor = "#11161F"           # slate: page and sidebar
+secondaryBackgroundColor = "#171D29"  # one step lighter: inputs, tables, tiles
+textColor = "#E6E9EF"
+baseFontSize = 17                     # a little larger than Streamlit's default (14)
+
+[client]
+toolbarMode = "minimal"               # hide developer menus from people using the app

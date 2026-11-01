@@ -27,6 +27,7 @@ WHY BACKTESTING?
 If a model crashes, it is shown as FAILED with the reason, never given a fake score.
 """
 
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -104,27 +105,35 @@ def backtest(model, series: pd.Series, fold_starts: list[int], horizon: int):
     return pd.concat(forecasts), pd.DataFrame(fold_rows).set_index("fold")
 
 
-def run_competition(series: pd.Series, report: DataReport, calendar=None) -> CompetitionResult:
-    """calendar: the selected festival dates (or None). Only festival-aware models use it."""
+def run_competition(series: pd.Series, report: DataReport, calendar=None,
+                    families: list | None = None, on_progress=None) -> CompetitionResult:
+    """calendar:    the selected festival dates (or None). Only festival-aware models use it.
+    families:    which model families to run (default: all the tier allows).
+    on_progress: optional function(message, fraction_done), e.g. to move a progress bar."""
     if report.tier == "too_small":
         raise ValueError(report.message)
 
     h = report.horizon
     fold_starts = plan_folds(len(series), h, report.frequency)
     test = series.iloc[-h:]
-    models, not_built = models_for(report.allowed_families, report.frequency, calendar)
+    models, not_built = models_for(families or report.allowed_families, report.frequency, calendar)
 
     # Step 5: backtest every model.
     rows, results = [], {}
-    for model in models:
+    for i, model in enumerate(models):
+        if on_progress:
+            on_progress(f"Backtesting {model.name} ({i + 1} of {len(models)})", i / len(models))
+        started = time.perf_counter()
         try:
             forecasts, folds = backtest(model, series, fold_starts, h)
             rows.append({"model": model.name, "family": model.family, "status": "ok",
-                         **score(series.loc[forecasts.index], forecasts)})
+                         **score(series.loc[forecasts.index], forecasts),
+                         "seconds": round(time.perf_counter() - started, 1)})
             results[model.name] = (model, forecasts, folds)
         except Exception as error:
             rows.append({"model": model.name, "family": model.family,
-                         "status": f"FAILED: {type(error).__name__}: {error}"})
+                         "status": f"FAILED: {type(error).__name__}: {error}",
+                         "seconds": round(time.perf_counter() - started, 1)})
     leaderboard = pd.DataFrame(rows).set_index("model")
     ok = leaderboard[leaderboard["status"] == "ok"]
     if ok.empty:
@@ -132,6 +141,9 @@ def run_competition(series: pd.Series, report: DataReport, calendar=None) -> Com
     leaderboard = pd.concat([ok.sort_values("MAE"), leaderboard[leaderboard["status"] != "ok"]])
     winner_name = ok["MAE"].idxmin()
     winner, backtest_forecast, winner_folds = results[winner_name]
+
+    if on_progress:
+        on_progress(f"Final test and future forecast with {winner_name}", 1.0)
 
     # Step 6: the winner forecasts the final test period ONCE.
     test_forecast = winner.fit(series.iloc[:-h]).predict(h)
