@@ -7,7 +7,7 @@ story about its own data, and plans for stock, staff and cash.**
 Built for small businesses, with India in mind (festival calendars, official inflation data,
 amounts in lakh and crore), but it works with any daily, weekly or monthly sales file.
 
-<!-- Live app: add the link here once deployed -->
+**[Open the live app](https://aipoweredbusinessforecastingsuite-cnzlndd6tzyvdsjlt3er93.streamlit.app/)** (free hosting: if it has been idle, click the button to wake it and give it about a minute).
 
 ![Results page](docs/screenshots/03-results.png)
 
