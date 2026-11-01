@@ -4,19 +4,20 @@ __pycache__/
 *.pyc
 
 # Big or downloadable data (the UK retail files are 40-100 MB; anyone can download them)
-data/
+/data/
 
 # Generated outputs (re-created by running the scripts)
-results/
-results_pipeline/
+/results/
+/results_pipeline/
 
-# Prototype scripts from the first UK-retail experiments.
-# Kept on this computer; to be moved into an experiments/ folder later.
-explore_data.py
-clean_data.py
-evaluation.py
-baselines.py
-gradient_boosting.py
-prophet_forecast.py
-lstm_forecast.py
-check_installs.py
+# Prototype scripts from the first UK-retail experiments, in the main folder only.
+# The leading "/" matters: without it, Git would also hide files with the same name
+# inside other folders (it hid forecaster/models/baselines.py once).
+/explore_data.py
+/clean_data.py
+/evaluation.py
+/baselines.py
+/gradient_boosting.py
+/prophet_forecast.py
+/lstm_forecast.py
+/check_installs.py
